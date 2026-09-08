@@ -72,15 +72,17 @@ worst = theme_summary.sort_values("avg_sentiment").iloc[0]
 best = theme_summary.sort_values("avg_sentiment", ascending=False).iloc[0]
 biggest = theme_summary.sort_values("volume", ascending=False).iloc[0]
 
-col1, col2, col3, col4 = st.columns(4)
+col1, col2, col3, col4 = st.columns([1, 1, 1, 2])
 col1.metric("Avg star rating", f"{fdf['score'].mean():.2f}")
 col2.metric("Avg sentiment", f"{fdf['sentiment'].mean():.2f}")
 col3.metric("Themes", fdf["theme_label"].nunique())
-col4.metric(
-    "Most negative theme",
-    worst["theme_label"],
-    help=f"avg sentiment {worst['avg_sentiment']:.2f} · {worst['volume']} mentions",
-)
+with col4:
+    # A long theme name will always be wider than a number, so this can't be
+    # a st.metric() (its value text truncates with "..." instead of wrapping).
+    # A wrapping heading stays fully readable at any window width.
+    st.caption("Most negative theme")
+    st.markdown(f"##### {worst['theme_label']}")
+    st.caption(f"avg sentiment {worst['avg_sentiment']:.2f} · {worst['volume']} mentions")
 
 st.divider()
 
