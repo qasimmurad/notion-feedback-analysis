@@ -104,6 +104,54 @@ def score_sentiment(texts: list[str]) -> list[float]:
     return [analyzer.polarity_scores(t)["compound"] for t in texts]
 
 
+# Ordered (most-specific-first) rules mapping a cluster's raw TF-IDF keyword
+# string to a short, human-readable theme name for display. Falls back to a
+# title-cased version of the top two keywords if nothing matches, so this
+# stays robust even if a rerun shifts a cluster's exact keyword mix slightly.
+THEME_LABEL_RULES = [
+    (("ai features", "ai slop", "ask ai"), "AI Features (Mixed Reception)"),
+    (("recent update",), "Bugs After Recent Updates"),
+    (("ipad pro", "ipad version"), "iPad & Apple Pencil Issues"),
+    (("better evernote", "apple notes", "better notes"), "Comparisons vs. Apple Notes / Evernote"),
+    (("customer service",), "Onboarding, Learning Curve & Support"),
+    (("project management",), "Note-Taking & Project Management"),
+    (("10 10", "organise life", "game changer"), "General Praise / Life Organization"),
+]
+
+
+def pretty_theme_label(keywords: str) -> str:
+    for triggers, label in THEME_LABEL_RULES:
+        if any(t in keywords for t in triggers):
+            return label
+    top_two = ", ".join(keywords.split(", ")[:2])
+    return top_two.title()
+
+
+# Keyword-based accessibility/neurodivergence signal. Simple and transparent
+# (a reviewer can see exactly why a review was flagged) rather than a more
+# opaque semantic-similarity approach — appropriate given how small this
+# signal turns out to be in the data (see dashboard caveat).
+ACCESSIBILITY_PATTERNS = {
+    "ADHD": r"\badhd\b",
+    "Autism": r"\bautis(m|tic)\b",
+    "Dyslexia": r"\bdyslexi",
+    "Visual impairment / blind": r"\bblind\b|low vision|visually impaired|screen reader",
+    "Color blindness": r"colou?r ?blind",
+    "Hearing / deaf": r"\bdeaf\b|hard of hearing",
+    "Neurodivergent (general)": r"neurodivergen|neurodivers",
+    "Anxiety / depression": r"\banxiety\b|\bdepression\b|mental health",
+    "Motor / physical disability": r"motor (skill|impair)|physical disabilit",
+}
+
+
+def tag_accessibility(texts: pd.Series) -> pd.Series:
+    tags = pd.Series([[] for _ in range(len(texts))], index=texts.index)
+    for label, pattern in ACCESSIBILITY_PATTERNS.items():
+        mask = texts.str.contains(pattern, case=False, regex=True, na=False)
+        tags.loc[mask] = tags.loc[mask].apply(lambda lst, label=label: lst + [label])
+    return tags.apply(lambda lst: ", ".join(lst))
+
+
 def main() -> None:
     print("Loading records...")
     df = load_records()
@@ -122,15 +170,23 @@ def main() -> None:
     print("Labeling clusters via top TF-IDF terms...")
     cluster_labels = label_clusters(df)
     df["theme"] = df["cluster"].map(cluster_labels)
+    df["theme_label"] = df["theme"].apply(pretty_theme_label)
 
     print("Scoring sentiment (VADER)...")
     df["sentiment"] = score_sentiment(df["text"].tolist())
+
+    print("Tagging accessibility/neurodivergence signal...")
+    df["accessibility_tags"] = tag_accessibility(df["text"])
+    df["mentions_accessibility"] = df["accessibility_tags"] != ""
 
     df.to_parquet(OUT_PATH, index=False)
     print(f"Wrote {len(df)} rows to {OUT_PATH}")
 
     print("\nTheme sizes:")
-    print(df["theme"].value_counts())
+    print(df.groupby("theme_label").size().sort_values(ascending=False))
+
+    print(f"\nAccessibility-tagged reviews: {df['mentions_accessibility'].sum()} "
+          f"({df['mentions_accessibility'].mean() * 100:.1f}%)")
 
 
 if __name__ == "__main__":
