@@ -127,11 +127,22 @@ st.divider()
 
 # --- Insights panel ---
 st.subheader("Insights & recommendations")
-st.markdown(f"""
-- 🔴 **Fix first:** *{worst['theme_label']}* is the most negative theme (avg sentiment {worst['avg_sentiment']:.2f}, {worst['volume']} mentions) — a concrete candidate for prioritized product investigation.
-- 🟢 **Protect it:** *{best['theme_label']}* is the most positive theme (avg sentiment {best['avg_sentiment']:.2f}) — a strength worth reinforcing in marketing/positioning, not just fixing what's broken.
-- 📊 **Top of mind:** *{biggest['theme_label']}* is the highest-volume theme ({biggest['volume']} mentions) regardless of sentiment — whatever it's about, it's what the community talks about most.
-""")
+
+st.error(
+    f"**Fix first** — *{worst['theme_label']}* is the most negative theme "
+    f"(avg sentiment {worst['avg_sentiment']:.2f}, {worst['volume']} mentions), "
+    "a concrete candidate for prioritized product investigation."
+)
+st.success(
+    f"**Protect it** — *{best['theme_label']}* is the most positive theme "
+    f"(avg sentiment {best['avg_sentiment']:.2f}), a strength worth reinforcing "
+    "in marketing/positioning, not just fixing what's broken."
+)
+st.info(
+    f"**Top of mind** — *{biggest['theme_label']}* is the highest-volume theme "
+    f"({biggest['volume']} mentions) regardless of sentiment — whatever it's about, "
+    "it's what the community talks about most."
+)
 
 st.divider()
 
