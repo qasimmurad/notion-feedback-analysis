@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+data/*.csv
+data/*.jsonl
+data/*.parquet
+.DS_Store
+
+# processed.parquet IS committed on purpose: the deployed dashboard reads it
+# directly rather than re-running the ML pipeline (torch/sentence-transformers)
+# on every cloud deploy.
+!data/processed.parquet
