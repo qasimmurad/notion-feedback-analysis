@@ -151,9 +151,8 @@ if len(acc) == 0:
     st.info("No accessibility-related mentions in the current filter.")
 else:
     st.warning(
-        f"Just **{len(acc)} of {len(fdf):,} reviews** ({acc_pct:.1f}%) mention "
-        "accessibility or neurodivergence context — small enough to be a lead worth "
-        "chasing, not a number to build a roadmap on.",
+        f"Based on **{len(acc)} of {len(fdf):,} reviews** ({acc_pct:.1f}%). Small enough "
+        "that I'd treat it as a hypothesis to test, not a finding to act on.",
         icon="⚠️",
     )
 
