@@ -163,7 +163,8 @@ if len(acc) == 0:
 else:
     st.warning(
         f"Based on **{len(acc)} of {len(fdf):,} reviews** ({acc_pct:.1f}%). Small enough "
-        "that I'd treat it as a hypothesis to test, not a finding to act on.",
+        "that I'd treat it as a hypothesis to test — and validate with real research "
+        "before it shapes anything.",
         icon="⚠️",
     )
 
